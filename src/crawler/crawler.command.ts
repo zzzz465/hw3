@@ -10,7 +10,7 @@ export class CrawlerCommand {
     command: 'crawl',
     describe: 'Crawl job posts from Saramin',
   })
-  async run(): Promise<void> {
+  async execute(): Promise<void> {
     console.log('Starting crawler...');
     const jobs = await this.crawlerService.crawl();
     console.log(`Crawled ${jobs.length} jobs:`);
@@ -18,8 +18,10 @@ export class CrawlerCommand {
       console.log(`\n[${i + 1}] ${job.title}`);
       console.log(`Company: ${job.company}`);
       console.log(`Location: ${job.location}`);
-      if (job.salary) console.log(`Salary: ${job.salary}`);
-      if (job.experience) console.log(`Experience: ${job.experience}`);
+      console.log(`Career: ${job.career}`);
+      console.log(`Education: ${job.education}`);
+      console.log(`Salary: ${job.salary}`);
+      console.log(`Sectors: ${job.sectors.join(', ')}`);
       console.log(`Link: ${job.link}`);
     });
   }
