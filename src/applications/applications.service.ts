@@ -9,6 +9,15 @@ import { Application } from '../entities/application.entity';
 import { Job } from '../entities/job.entity';
 import { User } from '../entities/user.entity';
 
+export interface ApplicationFilter {
+  status?: string;
+}
+
+export interface PaginationOptions {
+  page?: number;
+  pageSize?: number;
+}
+
 @Injectable()
 export class ApplicationsService {
   constructor(
@@ -22,6 +31,7 @@ export class ApplicationsService {
     // Check if job exists
     const job = await this.jobRepository.findOne({
       where: { id: jobId },
+      relations: ['company'],
     });
 
     if (!job) {
@@ -55,20 +65,46 @@ export class ApplicationsService {
     };
   }
 
-  async findAllByUser(userId: number) {
-    const applications = await this.applicationRepository.find({
-      where: {
-        user: { id: userId },
-      },
-      relations: ['job'],
-      order: {
-        id: 'DESC',
-      },
-    });
+  async findAllByUser(
+    userId: number,
+    filter: ApplicationFilter = {},
+    pagination: PaginationOptions = {},
+  ) {
+    const page = pagination.page || 1;
+    const pageSize = pagination.pageSize || 20;
+    const skip = (page - 1) * pageSize;
+
+    // Build query
+    const queryBuilder = this.applicationRepository
+      .createQueryBuilder('application')
+      .leftJoinAndSelect('application.job', 'job')
+      .leftJoinAndSelect('job.company', 'company')
+      .where('application.user.id = :userId', { userId });
+
+    // Apply status filter
+    if (filter.status) {
+      queryBuilder.andWhere('application.status = :status', {
+        status: filter.status.toUpperCase(),
+      });
+    }
+
+    // Add pagination and ordering
+    queryBuilder
+      .orderBy('application.createdAt', 'DESC')
+      .skip(skip)
+      .take(pageSize);
+
+    // Execute query
+    const [applications, total] = await queryBuilder.getManyAndCount();
 
     return {
       status: 'success',
       data: applications,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / pageSize),
+        totalItems: total,
+      },
     };
   }
 
@@ -78,6 +114,7 @@ export class ApplicationsService {
         id: applicationId,
         user: { id: userId },
       },
+      relations: ['job', 'job.company'],
     });
 
     if (!application) {
@@ -90,7 +127,9 @@ export class ApplicationsService {
       );
     }
 
-    await this.applicationRepository.remove(application);
+    // Update status instead of removing
+    application.status = 'CANCELLED';
+    await this.applicationRepository.save(application);
 
     return {
       status: 'success',

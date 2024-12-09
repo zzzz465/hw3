@@ -7,10 +7,12 @@ import {
   UseGuards,
   Request,
   Body,
+  Query,
 } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateApplicationDto } from './dto/create-application.dto';
+import { ApplicationFilterDto } from './dto/application-filter.dto';
 import { IdParamDto } from '../common/dto/id.param.dto';
 import {
   ApiTags,
@@ -42,7 +44,10 @@ export class ApplicationsController {
           job: {
             id: 1,
             title: 'Software Engineer',
-            // ... other job fields
+            company: {
+              id: 1,
+              name: 'Tech Corp',
+            },
           },
         },
       },
@@ -76,15 +81,26 @@ export class ApplicationsController {
             job: {
               id: 1,
               title: 'Software Engineer',
-              // ... other job fields
+              company: {
+                id: 1,
+                name: 'Tech Corp',
+              },
             },
           },
         ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 5,
+          totalItems: 100,
+        },
       },
     },
   })
-  async findAll(@Request() req) {
-    return this.applicationsService.findAllByUser(req.user.id);
+  async findAll(@Request() req, @Query() filter: ApplicationFilterDto) {
+    return this.applicationsService.findAllByUser(req.user.id, filter, {
+      page: filter.page,
+      pageSize: filter.pageSize,
+    });
   }
 
   @Delete(':id')
