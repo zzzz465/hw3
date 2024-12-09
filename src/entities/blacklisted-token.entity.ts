@@ -17,4 +17,4 @@ export class BlacklistedToken {
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-} 
+}
