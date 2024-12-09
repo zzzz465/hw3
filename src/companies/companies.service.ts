@@ -45,13 +45,23 @@ export class CompaniesService {
 
   async findOrCreate(name: string) {
     this.logger.log(`Finding or creating company: ${name}`);
-    let company = await this.companyRepository.findOne({
-      where: { name },
-    });
 
-    if (!company) {
-      company = this.companyRepository.create({ name });
-      await this.companyRepository.save(company);
+    // Use queryBuilder to handle upsert
+    const result = await this.companyRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Company)
+      .values({ name })
+      .orIgnore() // Skip if name already exists
+      .execute();
+
+    // Get the company (either existing or newly created)
+    const company = await this.companyRepository
+      .createQueryBuilder('company')
+      .where('company.name = :name', { name })
+      .getOne();
+
+    if (result.raw.changes > 0) {
       this.logger.debug(`Created new company: ${name}`);
     }
 
