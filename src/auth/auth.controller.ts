@@ -105,8 +105,11 @@ export class AuthController {
       },
     },
   })
-  async logout(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.logout(refreshTokenDto.refreshToken);
+  async logout(@Request() req, @Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.logout(
+      req.headers.authorization,
+      refreshTokenDto.refreshToken,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

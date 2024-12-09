@@ -8,6 +8,7 @@ import {
   UserExistsError,
 } from '../common/errors/auth.error';
 import { RefreshTokenService } from './refresh-token.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { LoggerService } from '../common/services/logger.service';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private refreshTokenService: RefreshTokenService,
+    private tokenBlacklistService: TokenBlacklistService,
     private readonly logger: LoggerService,
   ) {
     this.logger = new LoggerService(AuthService.name);
@@ -63,8 +65,21 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async logout(refreshToken: string) {
-    await this.refreshTokenService.revokeRefreshToken(refreshToken);
+  async logout(accessToken: string, refreshToken: string) {
+    // Extract expiration from access token
+    const decoded = this.jwtService.decode(accessToken.replace('Bearer ', ''));
+    const accessTokenExp = new Date(decoded['exp'] * 1000);
+
+    // Blacklist both tokens
+    await Promise.all([
+      this.tokenBlacklistService.blacklistToken(
+        accessToken,
+        'access',
+        accessTokenExp,
+      ),
+      this.refreshTokenService.revokeRefreshToken(refreshToken),
+    ]);
+
     return {
       status: 'success',
       message: 'Logged out successfully',
@@ -109,6 +124,7 @@ export class AuthService {
 
   private async generateTokens(user: User) {
     const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.refreshTokenService.createRefreshToken(
       user,
       this.REFRESH_TOKEN_EXPIRATION,
@@ -117,7 +133,7 @@ export class AuthService {
     return {
       status: 'success',
       data: {
-        access_token: this.jwtService.sign(payload),
+        access_token: accessToken,
         refresh_token: refreshToken,
       },
     };

@@ -142,7 +142,7 @@ export class JobsController {
   async create(@Body() createJobDto: CreateJobDto) {
     this.logger.logWithMetadata('log', 'Creating new job', {
       title: createJobDto.title,
-      company: createJobDto.company,
+      companyName: createJobDto.companyName,
     });
 
     const result = await this.jobsService.create(createJobDto);
@@ -187,7 +187,7 @@ export class JobsController {
   ) {
     this.logger.logWithMetadata('log', `Updating job with ID: ${params.id}`, {
       title: updateJobDto.title,
-      company: updateJobDto.company,
+      companyName: updateJobDto.companyName,
     });
 
     const result = await this.jobsService.update(
