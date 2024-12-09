@@ -20,8 +20,8 @@ export class CrawlerCommand {
       console.log(`[index: ${i + 1}] Career: ${job.career}`);
       console.log(`[index: ${i + 1}] Education: ${job.education}`);
       console.log(`[index: ${i + 1}] Salary: ${job.salary}`);
-      console.log(`[index: ${i + 1}] Sectors: ${job.sectors.join(', ')}`);
+      console.log(`[index: ${i + 1}] Sectors: ${job.sectors}`);
       console.log(`[index: ${i + 1}] Link: ${job.link}`);
     });
   }
-} 
+}
