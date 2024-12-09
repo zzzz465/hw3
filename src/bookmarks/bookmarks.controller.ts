@@ -26,8 +26,9 @@ export class BookmarksController {
     @Request() req,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('order') order?: 'ASC' | 'DESC',
   ) {
-    return this.bookmarksService.findAllByUser(req.user.id, page, limit);
+    return this.bookmarksService.findAllByUser(req.user.id, page, limit, order);
   }
 
   @Delete(':id')
