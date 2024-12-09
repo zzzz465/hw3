@@ -8,6 +8,7 @@ import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ApplicationsModule } from './applications/applications.module';
     AuthModule,
     JobsModule,
     ApplicationsModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
