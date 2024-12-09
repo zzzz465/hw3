@@ -10,7 +10,7 @@ export class CreateJobDto {
   @ApiProperty({ description: 'Company name' })
   @IsString()
   @IsNotEmpty()
-  company: string;
+  companyName: string;
 
   @ApiProperty({ description: 'Job location' })
   @IsString()
@@ -51,4 +51,4 @@ export class CreateJobDto {
   @IsString()
   @IsNotEmpty()
   link: string;
-} 
+}

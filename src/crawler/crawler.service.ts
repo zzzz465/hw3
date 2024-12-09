@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as puppeteer from 'puppeteer';
 import { Job } from '../entities/job.entity';
+import { CompaniesService } from '../companies/companies.service';
+import { LoggerService } from '../common/services/logger.service';
 
 export interface JobPost {
   title: string;
@@ -17,10 +19,15 @@ export interface JobPost {
 
 @Injectable()
 export class CrawlerService {
+  private readonly logger: LoggerService;
+
   constructor(
     @InjectRepository(Job)
     private jobRepository: Repository<Job>,
-  ) {}
+    private readonly companiesService: CompaniesService,
+  ) {
+    this.logger = new LoggerService(CrawlerService.name);
+  }
 
   private async crawlPage(
     browser: puppeteer.Browser,
@@ -122,18 +129,25 @@ export class CrawlerService {
         .map(() => this.worker(browser, queue, results));
 
       await Promise.all(workers);
-      const jobs = results.slice(0, 100).map((post) => {
-        const job = new Job();
-        job.title = post.title;
-        job.company = post.company;
-        job.location = post.location;
-        job.career = post.career;
-        job.education = post.education;
-        job.salary = post.salary;
-        job.sectors = post.sectors.join(',');
-        job.link = post.link;
-        return job;
-      });
+
+      const jobs = await Promise.all(
+        results.slice(0, 100).map(async (post) => {
+          const company = await this.companiesService.findOrCreate(
+            post.company,
+          );
+
+          const job = new Job();
+          job.title = post.title;
+          job.company = company;
+          job.location = post.location;
+          job.career = post.career;
+          job.education = post.education;
+          job.salary = post.salary;
+          job.sectors = post.sectors.join(',');
+          job.link = post.link;
+          return job;
+        }),
+      );
 
       // Save all jobs to database
       return await this.jobRepository.save(jobs);

@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindOptionsWhere } from 'typeorm';
 import { Job } from '../entities/job.entity';
+import { CompaniesService } from '../companies/companies.service';
+import { CreateJobDto } from './dto/create-job.dto';
+import { LoggerService } from '../common/services/logger.service';
 
 export interface JobsFilter {
   location?: string;
@@ -25,7 +28,11 @@ export class JobsService {
   constructor(
     @InjectRepository(Job)
     private jobRepository: Repository<Job>,
-  ) {}
+    private readonly companiesService: CompaniesService,
+    private readonly logger: LoggerService,
+  ) {
+    this.logger = new LoggerService(JobsService.name);
+  }
 
   async findAll(filter: JobsFilter, pagination: PaginationOptions) {
     const page = pagination.page || 1;
@@ -98,8 +105,16 @@ export class JobsService {
     };
   }
 
-  async create(jobData: Partial<Job>) {
-    const job = this.jobRepository.create(jobData);
+  async create(createJobDto: CreateJobDto) {
+    const company = await this.companiesService.findOrCreate(
+      createJobDto.companyName,
+    );
+
+    const job = this.jobRepository.create({
+      ...createJobDto,
+      company,
+    });
+
     await this.jobRepository.save(job);
 
     return {
@@ -108,7 +123,7 @@ export class JobsService {
     };
   }
 
-  async update(id: number, jobData: Partial<Job>) {
+  async update(id: number, updateJobDto: CreateJobDto) {
     const job = await this.jobRepository.findOne({
       where: { id },
     });
@@ -117,7 +132,15 @@ export class JobsService {
       throw new NotFoundException('Job not found');
     }
 
-    Object.assign(job, jobData);
+    const company = await this.companiesService.findOrCreate(
+      updateJobDto.companyName,
+    );
+
+    Object.assign(job, {
+      ...updateJobDto,
+      company,
+    });
+
     await this.jobRepository.save(job);
 
     return {

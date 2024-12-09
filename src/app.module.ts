@@ -12,6 +12,7 @@ import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CommonModule } from './common/common.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CommonModule } from './common/common.module';
     ApplicationsModule,
     BookmarksModule,
     CommonModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [

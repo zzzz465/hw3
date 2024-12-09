@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { Application } from './application.entity';
+import { Company } from './company.entity';
 
 @Entity()
 export class Job {
@@ -9,8 +10,8 @@ export class Job {
   @Column()
   title: string;
 
-  @Column()
-  company: string;
+  @ManyToOne(() => Company, (company) => company.jobs, { eager: true })
+  company: Company;
 
   @Column()
   location: string;
@@ -38,4 +39,10 @@ export class Job {
 
   @OneToMany(() => Application, (application) => application.job)
   applications: Application[];
+
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({ default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
 }
