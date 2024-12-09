@@ -7,15 +7,22 @@ import {
   InvalidCredentialsError,
   UserExistsError,
 } from '../common/errors/auth.error';
-import * as bcrypt from 'bcrypt';
+import { RefreshTokenService } from './refresh-token.service';
+import { LoggerService } from '../common/services/logger.service';
 
 @Injectable()
 export class AuthService {
+  private readonly REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60; // 7 days in seconds
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
-  ) {}
+    private refreshTokenService: RefreshTokenService,
+    private readonly logger: LoggerService,
+  ) {
+    this.logger = new LoggerService(AuthService.name);
+  }
 
   async register(email: string, password: string, name: string) {
     const existingUser = await this.userRepository.findOne({
@@ -27,11 +34,11 @@ export class AuthService {
 
     const user = new User();
     user.email = email;
-    user.password = await bcrypt.hash(password, 10);
+    user.password = Buffer.from(password).toString('base64'); // Base64 encoding
     user.name = name;
 
     await this.userRepository.save(user);
-    return this.generateToken(user);
+    return this.generateTokens(user);
   }
 
   async login(email: string, password: string) {
@@ -40,12 +47,28 @@ export class AuthService {
       throw new InvalidCredentialsError();
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const storedPassword = Buffer.from(user.password, 'base64').toString(); // Base64 decoding
+    if (password !== storedPassword) {
       throw new InvalidCredentialsError();
     }
 
-    return this.generateToken(user);
+    return this.generateTokens(user);
+  }
+
+  async refreshToken(refreshToken: string) {
+    const user =
+      await this.refreshTokenService.verifyRefreshToken(refreshToken);
+
+    await this.refreshTokenService.revokeRefreshToken(refreshToken);
+    return this.generateTokens(user);
+  }
+
+  async logout(refreshToken: string) {
+    await this.refreshTokenService.revokeRefreshToken(refreshToken);
+    return {
+      status: 'success',
+      message: 'Logged out successfully',
+    };
   }
 
   async updateProfile(
@@ -62,16 +85,13 @@ export class AuthService {
       throw new InvalidCredentialsError('User not found');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      currentPassword,
-      user.password,
-    );
-    if (!isPasswordValid) {
+    const storedPassword = Buffer.from(user.password, 'base64').toString();
+    if (currentPassword !== storedPassword) {
       throw new InvalidCredentialsError('Invalid current password');
     }
 
     if (newPassword) {
-      user.password = await bcrypt.hash(newPassword, 10);
+      user.password = Buffer.from(newPassword).toString('base64');
     }
 
     if (name) {
@@ -79,6 +99,7 @@ export class AuthService {
     }
 
     await this.userRepository.save(user);
+    await this.refreshTokenService.revokeAllUserTokens(userId);
 
     return {
       status: 'success',
@@ -86,12 +107,18 @@ export class AuthService {
     };
   }
 
-  private generateToken(user: User) {
+  private async generateTokens(user: User) {
     const payload = { sub: user.id, email: user.email };
+    const refreshToken = await this.refreshTokenService.createRefreshToken(
+      user,
+      this.REFRESH_TOKEN_EXPIRATION,
+    );
+
     return {
       status: 'success',
       data: {
         access_token: this.jwtService.sign(payload),
+        refresh_token: refreshToken,
       },
     };
   }
