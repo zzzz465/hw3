@@ -43,6 +43,43 @@ export class AuthService {
     return this.generateToken(user);
   }
 
+  async updateProfile(
+    userId: number,
+    currentPassword: string,
+    newPassword?: string,
+    name?: string,
+  ) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Verify current password
+    const encodedCurrentPassword =
+      Buffer.from(currentPassword).toString('base64');
+
+    if (user.password !== encodedCurrentPassword) {
+      throw new UnauthorizedException('Invalid current password');
+    }
+
+    // Update password if provided
+    if (newPassword) {
+      user.password = Buffer.from(newPassword).toString('base64');
+    }
+
+    // Update name if provided
+    if (name) {
+      user.name = name;
+    }
+
+    await this.userRepository.save(user);
+
+    return { message: 'Profile updated successfully' };
+  }
+
   private generateToken(user: User) {
     const payload = { sub: user.id, email: user.email };
     return {
