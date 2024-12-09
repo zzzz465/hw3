@@ -76,7 +76,12 @@ export class JobsController {
           title: 'Software Engineer',
           company: 'Tech Corp',
           location: 'Seoul',
-          // ... other job fields
+          career: '신입',
+          education: '학력무관',
+          salary: '면접 후 결정',
+          sectors: ['IT', 'Software'],
+          techStack: ['JavaScript', 'TypeScript', 'Node.js'],
+          link: 'https://example.com/job/1',
         },
       },
     },
@@ -100,15 +105,22 @@ export class JobsController {
         data: {
           id: 1,
           title: 'Software Engineer',
-          // ... other job fields
+          company: 'Tech Corp',
+          location: 'Seoul',
+          career: '신입',
+          education: '학력무관',
+          salary: '면접 후 결정',
+          sectors: ['IT', 'Software'],
+          techStack: ['JavaScript', 'TypeScript', 'Node.js'],
+          link: 'https://example.com/job/1',
         },
       },
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  async create(@Body() jobData: CreateJobDto) {
-    return this.jobsService.create(jobData);
+  async create(@Body() createJobDto: CreateJobDto) {
+    return this.jobsService.create(createJobDto);
   }
 
   @Put(':id')
@@ -125,7 +137,14 @@ export class JobsController {
         data: {
           id: 1,
           title: 'Senior Software Engineer',
-          // ... other job fields
+          company: 'Tech Corp',
+          location: 'Seoul',
+          career: '경력',
+          education: '학력무관',
+          salary: '면접 후 결정',
+          sectors: ['IT', 'Software'],
+          techStack: ['JavaScript', 'TypeScript', 'Node.js'],
+          link: 'https://example.com/job/1',
         },
       },
     },
@@ -133,8 +152,11 @@ export class JobsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   @ApiResponse({ status: 404, description: 'Job not found' })
-  async update(@Param() params: IdParamDto, @Body() jobData: CreateJobDto) {
-    return this.jobsService.update(Number(params.id), jobData);
+  async update(
+    @Param() params: IdParamDto,
+    @Body() updateJobDto: CreateJobDto,
+  ) {
+    return this.jobsService.update(Number(params.id), updateJobDto);
   }
 
   @Delete(':id')
