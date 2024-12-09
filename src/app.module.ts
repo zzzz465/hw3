@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { JobsModule } from './jobs/jobs.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { JobsModule } from './jobs/jobs.module';
     }),
     AuthModule,
     JobsModule,
+    ApplicationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
