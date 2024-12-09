@@ -19,6 +19,7 @@ import { JobsModule } from './jobs/jobs.module';
       synchronize: true, // Only for development!
     }),
     AuthModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
