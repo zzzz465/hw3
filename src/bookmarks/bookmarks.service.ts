@@ -53,8 +53,10 @@ export class BookmarksService {
     };
   }
 
-  async findAllByUser(userId: number) {
-    const bookmarks = await this.bookmarkRepository.find({
+  async findAllByUser(userId: number, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const [bookmarks, total] = await this.bookmarkRepository.findAndCount({
       where: {
         user: { id: userId },
       },
@@ -62,11 +64,19 @@ export class BookmarksService {
       order: {
         createdAt: 'DESC',
       },
+      skip,
+      take: limit,
     });
 
     return {
       status: 'success',
       data: bookmarks,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
