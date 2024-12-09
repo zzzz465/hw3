@@ -23,11 +23,17 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { LoggerService } from '../common/services/logger.service';
 
 @ApiTags('Jobs')
 @Controller('jobs')
 export class JobsController {
-  constructor(private jobsService: JobsService) {}
+  constructor(
+    private jobsService: JobsService,
+    private readonly logger: LoggerService,
+  ) {
+    this.logger = new LoggerService(JobsController.name);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all jobs with filters and pagination' })
@@ -43,7 +49,12 @@ export class JobsController {
             title: 'Software Engineer',
             company: 'Tech Corp',
             location: 'Seoul',
-            // ... other job fields
+            career: '신입',
+            education: '학력무관',
+            salary: '면접 후 결정',
+            sectors: ['IT', 'Software'],
+            techStack: ['JavaScript', 'TypeScript', 'Node.js'],
+            link: 'https://example.com/job/1',
           },
         ],
         pagination: {
@@ -55,12 +66,20 @@ export class JobsController {
     },
   })
   async findAll(@Query() filter: JobFilterDto) {
+    this.logger.log(`Fetching jobs with filters: ${JSON.stringify(filter)}`);
+
     const pagination = {
       page: filter.page ? Number(filter.page) : 1,
       pageSize: filter.pageSize ? Number(filter.pageSize) : 20,
     };
 
-    return this.jobsService.findAll(filter, pagination);
+    const result = await this.jobsService.findAll(filter, pagination);
+
+    this.logger.debug(
+      `Found ${result.data.length} jobs out of ${result.pagination.totalItems} total`,
+    );
+
+    return result;
   }
 
   @Get(':id')
@@ -88,6 +107,7 @@ export class JobsController {
   })
   @ApiResponse({ status: 404, description: 'Job not found' })
   async findOne(@Param() params: IdParamDto) {
+    this.logger.log(`Fetching job with ID: ${params.id}`);
     return this.jobsService.findOne(Number(params.id));
   }
 
@@ -120,7 +140,16 @@ export class JobsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   async create(@Body() createJobDto: CreateJobDto) {
-    return this.jobsService.create(createJobDto);
+    this.logger.log('Creating new job', {
+      title: createJobDto.title,
+      company: createJobDto.company,
+    });
+
+    const result = await this.jobsService.create(createJobDto);
+
+    this.logger.debug(`Job created successfully with ID: ${result.data.id}`);
+
+    return result;
   }
 
   @Put(':id')
@@ -156,7 +185,19 @@ export class JobsController {
     @Param() params: IdParamDto,
     @Body() updateJobDto: CreateJobDto,
   ) {
-    return this.jobsService.update(Number(params.id), updateJobDto);
+    this.logger.log(`Updating job with ID: ${params.id}`, {
+      title: updateJobDto.title,
+      company: updateJobDto.company,
+    });
+
+    const result = await this.jobsService.update(
+      Number(params.id),
+      updateJobDto,
+    );
+
+    this.logger.debug(`Job updated successfully: ${params.id}`);
+
+    return result;
   }
 
   @Delete(':id')
@@ -178,6 +219,12 @@ export class JobsController {
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   @ApiResponse({ status: 404, description: 'Job not found' })
   async remove(@Param() params: IdParamDto) {
-    return this.jobsService.remove(Number(params.id));
+    this.logger.log(`Deleting job with ID: ${params.id}`);
+
+    const result = await this.jobsService.remove(Number(params.id));
+
+    this.logger.debug(`Job deleted successfully: ${params.id}`);
+
+    return result;
   }
 }
