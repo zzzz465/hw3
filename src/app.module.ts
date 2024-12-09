@@ -5,6 +5,7 @@ import { CrawlerModule } from './crawler/crawler.module';
 import { CommandModule } from 'nestjs-command';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { join } from 'path';
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       synchronize: true, // Only for development!
     }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
