@@ -9,74 +9,153 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JobsService, JobsFilter, PaginationOptions } from './jobs.service';
-import { Job } from '../entities/job.entity';
+import { JobsService } from './jobs.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
+import { JobFilterDto } from './dto/job-filter.dto';
+import { CreateJobDto } from './dto/create-job.dto';
+import { IdParamDto } from '../common/dto/id.param.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
+@ApiTags('Jobs')
 @Controller('jobs')
 export class JobsController {
   constructor(private jobsService: JobsService) {}
 
   @Get()
-  async findAll(
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-    @Query('location') location?: string,
-    @Query('career') career?: string,
-    @Query('education') education?: string,
-    @Query('salary') salary?: string,
-    @Query('sectors') sectors?: string,
-    @Query('search') search?: string,
-    @Query('company') company?: string,
-    @Query('position') position?: string,
-    @Query('techStack') techStack?: string,
-  ) {
-    const filter: JobsFilter = {
-      location,
-      career,
-      education,
-      salary,
-      sectors,
-      search,
-      company,
-      position,
-      techStack,
-    };
-
-    const pagination: PaginationOptions = {
-      page: page ? Number(page) : 1,
-      pageSize: pageSize ? Number(pageSize) : 20,
+  @ApiOperation({ summary: 'Get all jobs with filters and pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of jobs',
+    schema: {
+      example: {
+        status: 'success',
+        data: [
+          {
+            id: 1,
+            title: 'Software Engineer',
+            company: 'Tech Corp',
+            location: 'Seoul',
+            // ... other job fields
+          },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 5,
+          totalItems: 100,
+        },
+      },
+    },
+  })
+  async findAll(@Query() filter: JobFilterDto) {
+    const pagination = {
+      page: filter.page ? Number(filter.page) : 1,
+      pageSize: filter.pageSize ? Number(filter.pageSize) : 20,
     };
 
     return this.jobsService.findAll(filter, pagination);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.jobsService.findOne(Number(id));
+  @ApiOperation({ summary: 'Get job by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Job details',
+    schema: {
+      example: {
+        status: 'success',
+        data: {
+          id: 1,
+          title: 'Software Engineer',
+          company: 'Tech Corp',
+          location: 'Seoul',
+          // ... other job fields
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Job not found' })
+  async findOne(@Param() params: IdParamDto) {
+    return this.jobsService.findOne(Number(params.id));
   }
 
+  @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @Post()
-  async create(@Body() jobData: Partial<Job>) {
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new job (Admin only)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Job created successfully',
+    schema: {
+      example: {
+        status: 'success',
+        data: {
+          id: 1,
+          title: 'Software Engineer',
+          // ... other job fields
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async create(@Body() jobData: CreateJobDto) {
     return this.jobsService.create(jobData);
   }
 
+  @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @Put(':id')
-  async update(@Param('id') id: string, @Body() jobData: Partial<Job>) {
-    return this.jobsService.update(Number(id), jobData);
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a job (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Job updated successfully',
+    schema: {
+      example: {
+        status: 'success',
+        data: {
+          id: 1,
+          title: 'Senior Software Engineer',
+          // ... other job fields
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiResponse({ status: 404, description: 'Job not found' })
+  async update(@Param() params: IdParamDto, @Body() jobData: CreateJobDto) {
+    return this.jobsService.update(Number(params.id), jobData);
   }
 
+  @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.jobsService.remove(Number(id));
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a job (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Job deleted successfully',
+    schema: {
+      example: {
+        status: 'success',
+        message: 'Job deleted successfully',
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiResponse({ status: 404, description: 'Job not found' })
+  async remove(@Param() params: IdParamDto) {
+    return this.jobsService.remove(Number(params.id));
   }
 }
