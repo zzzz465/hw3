@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Job } from '../entities/job.entity';
 import { CompaniesService } from '../companies/companies.service';
 import { CreateJobDto } from './dto/create-job.dto';
