@@ -13,4 +13,4 @@ export interface PaginatedResponse<T> extends CommonResponse<T[]> {
     totalItems: number;
     pageSize: number;
   };
-} 
+}

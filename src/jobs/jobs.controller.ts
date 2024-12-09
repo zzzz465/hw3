@@ -140,7 +140,7 @@ export class JobsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   async create(@Body() createJobDto: CreateJobDto) {
-    this.logger.log('Creating new job', {
+    this.logger.logWithMetadata('log', 'Creating new job', {
       title: createJobDto.title,
       company: createJobDto.company,
     });
@@ -185,7 +185,7 @@ export class JobsController {
     @Param() params: IdParamDto,
     @Body() updateJobDto: CreateJobDto,
   ) {
-    this.logger.log(`Updating job with ID: ${params.id}`, {
+    this.logger.logWithMetadata('log', `Updating job with ID: ${params.id}`, {
       title: updateJobDto.title,
       company: updateJobDto.company,
     });
