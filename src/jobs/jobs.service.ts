@@ -39,45 +39,69 @@ export class JobsService {
     const pageSize = pagination.pageSize || 20;
     const skip = (page - 1) * pageSize;
 
-    // Build where conditions
-    const where: FindOptionsWhere<Job> = {};
+    // Build query
+    const queryBuilder = this.jobRepository
+      .createQueryBuilder('job')
+      .leftJoinAndSelect('job.company', 'company');
 
+    // Apply filters
     if (filter.location) {
-      where.location = Like(`%${filter.location}%`);
+      queryBuilder.andWhere('job.location LIKE :location', {
+        location: `%${filter.location}%`,
+      });
     }
     if (filter.career) {
-      where.career = Like(`%${filter.career}%`);
+      queryBuilder.andWhere('job.career LIKE :career', {
+        career: `%${filter.career}%`,
+      });
     }
     if (filter.education) {
-      where.education = Like(`%${filter.education}%`);
+      queryBuilder.andWhere('job.education LIKE :education', {
+        education: `%${filter.education}%`,
+      });
     }
     if (filter.salary) {
-      where.salary = Like(`%${filter.salary}%`);
+      queryBuilder.andWhere('job.salary LIKE :salary', {
+        salary: `%${filter.salary}%`,
+      });
     }
     if (filter.sectors) {
-      where.sectors = Like(`%${filter.sectors}%`);
+      queryBuilder.andWhere('job.sectors LIKE :sectors', {
+        sectors: `%${filter.sectors}%`,
+      });
     }
     if (filter.search) {
-      where.title = Like(`%${filter.search}%`);
+      queryBuilder.andWhere('job.title LIKE :search', {
+        search: `%${filter.search}%`,
+      });
     }
     if (filter.company) {
-      where.company = Like(`%${filter.company}%`);
+      queryBuilder.andWhere('company.name LIKE :company', {
+        company: `%${filter.company}%`,
+      });
     }
     if (filter.position) {
-      where.position = Like(`%${filter.position}%`);
+      queryBuilder.andWhere(
+        '(job.position LIKE :position OR job.title LIKE :position)',
+        {
+          position: `%${filter.position}%`,
+        },
+      );
     }
     if (filter.techStack) {
-      where.techStack = Like(`%${filter.techStack}%`);
+      queryBuilder.andWhere('job.techStack LIKE :techStack', {
+        techStack: `%${filter.techStack}%`,
+      });
     }
 
-    const [jobs, total] = await this.jobRepository.findAndCount({
-      where,
-      skip,
-      take: pageSize,
-      order: {
-        id: 'DESC', // Latest first
-      },
-    });
+    // Add pagination
+    queryBuilder.skip(skip).take(pageSize);
+
+    // Order by latest first
+    queryBuilder.orderBy('job.createdAt', 'DESC');
+
+    // Execute query
+    const [jobs, total] = await queryBuilder.getManyAndCount();
 
     return {
       status: 'success',
@@ -93,6 +117,7 @@ export class JobsService {
   async findOne(id: number) {
     const job = await this.jobRepository.findOne({
       where: { id },
+      relations: ['company'],
     });
 
     if (!job) {

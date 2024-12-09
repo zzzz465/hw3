@@ -1,15 +1,18 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class JobFilterDto {
   @ApiPropertyOptional({ description: 'Page number', default: 1 })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @Transform(({ value }) => (value ? parseInt(value) : 1))
   page?: number;
 
   @ApiPropertyOptional({ description: 'Items per page', default: 20 })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @Transform(({ value }) => (value ? parseInt(value) : 20))
   pageSize?: number;
 
   @ApiPropertyOptional({ description: 'Filter by location' })
@@ -56,4 +59,4 @@ export class JobFilterDto {
   @IsOptional()
   @IsString()
   techStack?: string;
-} 
+}
