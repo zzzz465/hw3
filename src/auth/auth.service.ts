@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import {
+  InvalidCredentialsError,
+  UserExistsError,
+} from '../common/errors/auth.error';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -17,12 +22,12 @@ export class AuthService {
       where: { email },
     });
     if (existingUser) {
-      throw new UnauthorizedException('Email already exists');
+      throw new UserExistsError();
     }
 
     const user = new User();
     user.email = email;
-    user.password = Buffer.from(password).toString('base64'); // Base64 encoding
+    user.password = await bcrypt.hash(password, 10);
     user.name = name;
 
     await this.userRepository.save(user);
@@ -32,12 +37,12 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
-    const encodedPassword = Buffer.from(password).toString('base64');
-    if (user.password !== encodedPassword) {
-      throw new UnauthorizedException('Invalid credentials');
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new InvalidCredentialsError();
     }
 
     return this.generateToken(user);
@@ -54,36 +59,40 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new InvalidCredentialsError('User not found');
     }
 
-    // Verify current password
-    const encodedCurrentPassword =
-      Buffer.from(currentPassword).toString('base64');
-
-    if (user.password !== encodedCurrentPassword) {
-      throw new UnauthorizedException('Invalid current password');
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new InvalidCredentialsError('Invalid current password');
     }
 
-    // Update password if provided
     if (newPassword) {
-      user.password = Buffer.from(newPassword).toString('base64');
+      user.password = await bcrypt.hash(newPassword, 10);
     }
 
-    // Update name if provided
     if (name) {
       user.name = name;
     }
 
     await this.userRepository.save(user);
 
-    return { message: 'Profile updated successfully' };
+    return {
+      status: 'success',
+      message: 'Profile updated successfully',
+    };
   }
 
   private generateToken(user: User) {
     const payload = { sub: user.id, email: user.email };
     return {
-      access_token: this.jwtService.sign(payload),
+      status: 'success',
+      data: {
+        access_token: this.jwtService.sign(payload),
+      },
     };
   }
 }
