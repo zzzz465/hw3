@@ -27,6 +27,9 @@ export class JobsController {
     @Query('salary') salary?: string,
     @Query('sectors') sectors?: string,
     @Query('search') search?: string,
+    @Query('company') company?: string,
+    @Query('position') position?: string,
+    @Query('techStack') techStack?: string,
   ) {
     const filter: JobsFilter = {
       location,
@@ -35,6 +38,9 @@ export class JobsController {
       salary,
       sectors,
       search,
+      company,
+      position,
+      techStack,
     };
 
     const pagination: PaginationOptions = {

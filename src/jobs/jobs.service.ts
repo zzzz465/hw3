@@ -10,6 +10,9 @@ export interface JobsFilter {
   salary?: string;
   sectors?: string;
   search?: string;
+  company?: string;
+  position?: string;
+  techStack?: string;
 }
 
 export interface PaginationOptions {
@@ -49,6 +52,15 @@ export class JobsService {
     }
     if (filter.search) {
       where.title = Like(`%${filter.search}%`);
+    }
+    if (filter.company) {
+      where.company = Like(`%${filter.company}%`);
+    }
+    if (filter.position) {
+      where.position = Like(`%${filter.position}%`);
+    }
+    if (filter.techStack) {
+      where.techStack = Like(`%${filter.techStack}%`);
     }
 
     const [jobs, total] = await this.jobRepository.findAndCount({

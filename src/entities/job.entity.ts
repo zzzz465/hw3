@@ -30,6 +30,12 @@ export class Job {
   @Column()
   link: string;
 
+  @Column({ nullable: true })
+  position: string;
+
+  @Column({ nullable: true })
+  techStack: string; // Stored as comma-separated string for simplicity
+
   @OneToMany(() => Application, (application) => application.job)
   applications: Application[];
 }
