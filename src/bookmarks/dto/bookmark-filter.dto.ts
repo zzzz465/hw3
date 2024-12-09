@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsNumber, IsEnum } from 'class-validator';
+import { IsOptional, IsEnum } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export enum SortOrder {
   ASC = 'ASC',
@@ -9,13 +10,15 @@ export enum SortOrder {
 export class BookmarkFilterDto {
   @ApiPropertyOptional({ description: 'Page number', default: 1 })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @Transform(({ value }) => (value ? parseInt(value) : 1))
   page?: number;
 
   @ApiPropertyOptional({ description: 'Items per page', default: 10 })
   @IsOptional()
-  @IsNumber()
-  limit?: number;
+  @Type(() => Number)
+  @Transform(({ value }) => (value ? parseInt(value) : 10))
+  pageSize?: number;
 
   @ApiPropertyOptional({
     description: 'Sort order by creation date',
@@ -25,4 +28,4 @@ export class BookmarkFilterDto {
   @IsOptional()
   @IsEnum(SortOrder)
   order?: SortOrder;
-} 
+}

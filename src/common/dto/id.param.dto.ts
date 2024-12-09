@@ -1,11 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumberString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsInt } from 'class-validator';
 
 export class IdParamDto {
   @ApiProperty({
     description: 'Resource ID',
-    example: '1',
+    example: 1,
   })
-  @IsNumberString()
-  id: string;
+  @Type(() => Number)
+  @IsInt()
+  @Transform(({ value }) => parseInt(value))
+  id: number;
 }

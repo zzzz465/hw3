@@ -8,15 +8,7 @@ import { Repository } from 'typeorm';
 import { Application } from '../entities/application.entity';
 import { Job } from '../entities/job.entity';
 import { User } from '../entities/user.entity';
-
-export interface ApplicationFilter {
-  status?: string;
-}
-
-export interface PaginationOptions {
-  page?: number;
-  pageSize?: number;
-}
+import { ApplicationFilterDto } from './dto/application-filter.dto';
 
 @Injectable()
 export class ApplicationsService {
@@ -31,7 +23,6 @@ export class ApplicationsService {
     // Check if job exists
     const job = await this.jobRepository.findOne({
       where: { id: jobId },
-      relations: ['company'],
     });
 
     if (!job) {
@@ -67,35 +58,28 @@ export class ApplicationsService {
 
   async findAllByUser(
     userId: number,
-    filter: ApplicationFilter = {},
-    pagination: PaginationOptions = {},
+    filter: ApplicationFilterDto,
+    pagination: { page: number; pageSize: number },
   ) {
-    const page = pagination.page || 1;
-    const pageSize = pagination.pageSize || 20;
+    const { page = 1, pageSize = 20 } = pagination;
     const skip = (page - 1) * pageSize;
 
-    // Build query
     const queryBuilder = this.applicationRepository
       .createQueryBuilder('application')
       .leftJoinAndSelect('application.job', 'job')
-      .leftJoinAndSelect('job.company', 'company')
       .where('application.user.id = :userId', { userId });
 
-    // Apply status filter
     if (filter.status) {
       queryBuilder.andWhere('application.status = :status', {
-        status: filter.status.toUpperCase(),
+        status: filter.status,
       });
     }
 
-    // Add pagination and ordering
-    queryBuilder
-      .orderBy('application.createdAt', 'DESC')
+    const [applications, total] = await queryBuilder
+      .orderBy('application.id', 'DESC')
       .skip(skip)
-      .take(pageSize);
-
-    // Execute query
-    const [applications, total] = await queryBuilder.getManyAndCount();
+      .take(pageSize)
+      .getManyAndCount();
 
     return {
       status: 'success',
@@ -104,6 +88,7 @@ export class ApplicationsService {
         currentPage: page,
         totalPages: Math.ceil(total / pageSize),
         totalItems: total,
+        pageSize,
       },
     };
   }
@@ -114,7 +99,6 @@ export class ApplicationsService {
         id: applicationId,
         user: { id: userId },
       },
-      relations: ['job', 'job.company'],
     });
 
     if (!application) {
@@ -127,9 +111,7 @@ export class ApplicationsService {
       );
     }
 
-    // Update status instead of removing
-    application.status = 'CANCELLED';
-    await this.applicationRepository.save(application);
+    await this.applicationRepository.remove(application);
 
     return {
       status: 'success',

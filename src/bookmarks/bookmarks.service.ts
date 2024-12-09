@@ -53,8 +53,13 @@ export class BookmarksService {
     };
   }
 
-  async findAllByUser(userId: number, page = 1, limit = 10, order: 'ASC' | 'DESC' = 'DESC') {
-    const skip = (page - 1) * limit;
+  async findAllByUser(
+    userId: number,
+    page = 1,
+    pageSize = 10,
+    order: 'ASC' | 'DESC' = 'DESC',
+  ) {
+    const skip = (page - 1) * pageSize;
 
     const [bookmarks, total] = await this.bookmarkRepository.findAndCount({
       where: {
@@ -65,7 +70,7 @@ export class BookmarksService {
         createdAt: order,
       },
       skip,
-      take: limit,
+      take: pageSize,
     });
 
     return {
@@ -73,9 +78,9 @@ export class BookmarksService {
       data: bookmarks,
       pagination: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
       },
     };
   }

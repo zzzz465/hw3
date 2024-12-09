@@ -26,10 +26,10 @@ import {
 export class BookmarksController {
   constructor(private readonly bookmarksService: BookmarksService) {}
 
-  @Post(':jobId')
+  @Post(':id')
   @ApiOperation({ summary: 'Add a job to bookmarks' })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'Job bookmarked successfully',
     schema: {
       example: {
@@ -41,7 +41,7 @@ export class BookmarksController {
   @ApiResponse({ status: 400, description: 'Job already bookmarked' })
   @ApiResponse({ status: 404, description: 'Job not found' })
   async addBookmark(@Request() req, @Param() params: IdParamDto) {
-    return this.bookmarksService.addBookmark(req.user.id, parseInt(params.id));
+    return this.bookmarksService.addBookmark(req.user.id, params.id);
   }
 
   @Get()
@@ -65,8 +65,8 @@ export class BookmarksController {
         ],
         pagination: {
           total: 10,
-          page: 1,
-          limit: 10,
+          currentPage: 1,
+          pageSize: 10,
           totalPages: 1,
         },
       },
@@ -76,7 +76,7 @@ export class BookmarksController {
     return this.bookmarksService.findAllByUser(
       req.user.id,
       filter.page,
-      filter.limit,
+      filter.pageSize,
       filter.order || SortOrder.DESC,
     );
   }
@@ -95,9 +95,6 @@ export class BookmarksController {
   })
   @ApiResponse({ status: 404, description: 'Bookmark not found' })
   async removeBookmark(@Request() req, @Param() params: IdParamDto) {
-    return this.bookmarksService.removeBookmark(
-      req.user.id,
-      parseInt(params.id),
-    );
+    return this.bookmarksService.removeBookmark(req.user.id, params.id);
   }
 }
