@@ -12,6 +12,9 @@ import {
 import { JobsService, JobsFilter, PaginationOptions } from './jobs.service';
 import { Job } from '../entities/job.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../entities/user.entity';
 
 @Controller('jobs')
 export class JobsController {
@@ -56,19 +59,22 @@ export class JobsController {
     return this.jobsService.findOne(Number(id));
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Post()
   async create(@Body() jobData: Partial<Job>) {
     return this.jobsService.create(jobData);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Put(':id')
   async update(@Param('id') id: string, @Body() jobData: Partial<Job>) {
     return this.jobsService.update(Number(id), jobData);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.jobsService.remove(Number(id));
