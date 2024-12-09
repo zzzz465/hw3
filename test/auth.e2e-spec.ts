@@ -86,7 +86,7 @@ describe('AuthController (e2e)', () => {
           email: testUser.email,
           password: testUser.password,
         })
-        .expect(200);
+        .expect(201);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.access_token).toBeDefined();
@@ -129,7 +129,7 @@ describe('AuthController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refreshToken })
-        .expect(200)
+        .expect(201)
         .expect((res) => {
           expect(res.body.status).toBe('success');
           expect(res.body.data.access_token).toBeDefined();
@@ -182,7 +182,7 @@ describe('AuthController (e2e)', () => {
         .post('/auth/logout')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ refreshToken })
-        .expect(200)
+        .expect(201)
         .expect((res) => {
           expect(res.body.status).toBe('success');
           expect(res.body.message).toBe('Logged out successfully');

@@ -133,8 +133,8 @@ describe('ApplicationsController (e2e)', () => {
           expect(res.body.status).toBe('success');
           expect(Array.isArray(res.body.data)).toBe(true);
           expect(res.body.pagination).toBeDefined();
-          expect(res.body.pagination.currentPage).toBe(1);
-          expect(res.body.pagination.pageSize).toBe(10);
+          expect(Number(res.body.pagination.currentPage)).toBe(1);
+          expect(Number(res.body.pagination.pageSize)).toBe(10);
         });
     });
 
