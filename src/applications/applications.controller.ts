@@ -91,7 +91,7 @@ export class ApplicationsController {
         pagination: {
           currentPage: 1,
           totalPages: 5,
-          totalItems: 100,
+          totalItems: 1000,
         },
       },
     },

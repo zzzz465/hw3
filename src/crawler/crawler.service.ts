@@ -102,7 +102,7 @@ export class CrawlerService {
     queue: number[],
     results: JobPost[],
   ): Promise<void> {
-    while (queue.length > 0 && results.length < 100) {
+    while (queue.length > 0 && results.length < 1000) {
       const pageNum = queue.shift();
       if (pageNum === undefined) break;
 
@@ -131,7 +131,7 @@ export class CrawlerService {
       await Promise.all(workers);
 
       const jobs = await Promise.all(
-        results.slice(0, 100).map(async (post) => {
+        results.slice(0, 1000).map(async (post) => {
           const company = await this.companiesService.findOrCreate(
             post.company,
           );
